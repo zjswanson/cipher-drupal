@@ -6,7 +6,7 @@
 
 ## Description
 
-_HP's Books gives a simple demonstration of several basic drupal features, including creating custom modules with handwritten php function for drupal, drupal form hooks, and use of built-in and custom validation._
+_IndeCipherable gives a simple demonstration of several basic drupal features, including creating custom modules with handwritten php function for drupal, drupal form hooks, and use of built-in and custom validation._
 
 ## Setup/Installation Requirements
 
