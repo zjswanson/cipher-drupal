@@ -1,0 +1,103 @@
+<?php
+
+function cipher_menu(){
+    $items = array();
+    $items['cipher'] = array(
+        'title' => 'Encode a message with the Cipher',
+        'page callback' => 'drupal_get_form',
+        'page arguments' => array('cipher_form'),
+        'access callback' => TRUE,
+        'type' => MENU_NORMAL_ITEM,
+    );
+    $items['cipher_result'] = array(
+        'title' => 'Encode a message with the Cipher',
+        'page callback' => 'display_cipher',
+        'access callback' => TRUE,
+        'type' => MENU_CALLBACK,
+    );
+    return $items;
+}
+
+function cipher_form(){
+    // validate pos integer from 1-25
+    $form['shift_value'] = array(
+        '#title' => 'Shift Value',
+        '#type' => 'textfield',
+        '#description' => 'The number of places to shift your letters',
+        '#element_validate' => array('element_validate_integer_positive'),
+        '#required' => TRUE,
+    );
+    // validate text right or left
+    $form['shift_direction'] = array(
+        '#title' => 'Shift Direction',
+        '#type' => 'textfield',
+        '#description' => 'The direction to shift (left/right)',
+        '#element_validate' => array('element_validate_direction'),
+        '#required' => TRUE,
+    );
+
+    // validate text, space, period.
+    $form['message'] = array(
+        '#title' => 'Message',
+        '#type' => 'textfield',
+        '#description' => 'The secret message to encode',
+        '#element_validate' => array('element_validate_plain_text'),
+        '#required' => TRUE,
+    );
+
+    $form['submt'] = array(
+        '#type' => 'submit',
+        '#value' => 'Encode the Message'
+    );
+    return $form;
+}
+
+function shift_key($key,$shift) {
+    $new_key = $key + $shift;
+    if ( $new_key> 25 ) {
+        $new_key = $new_key%26;
+    }
+    if ( $new_key<0 ) {
+        $new_key = 26 - abs($new_key)%26;
+    }
+    return $new_key;
+}
+
+function cipher_form_submit($form, &$form_state) {
+    $alphabet = array('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z');
+    $message = str_split(strtolower($form_state['values']['message']));
+
+    $shift = $form_state['values']['shift_value'];
+    $direction = $form_state['values']['shift_direction'];
+    if ($direction === 'left') {$shift *= -1;}
+    $code = array();
+    foreach($message as $letter) {
+        $key = array_search($letter, $alphabet);
+        if ($key !== FALSE ) {
+            $new_key = shift_key($key,$shift);
+            $letter = $alphabet[$new_key];
+        }
+       $code[] = $letter;
+    }
+    $code = implode($code);
+    $_SESSION['code'] = $code;
+    $form_state['redirect'] = 'cipher_result';
+}
+
+function display_cipher() {
+    return 'The encoded message is: ' . $_SESSION['code'];
+}
+
+function element_validate_direction($element) {
+    $element['#value'] = strtolower($element['#value']);
+    if ($element['#value'] !== 'right' && $element['#value'] !== 'left') {
+        form_error($element, t('direction must be right or left'));
+    }
+}
+
+function element_validate_plain_text($element) {
+    $match = preg_match('/[^a-z\s\.]+/i',$element['#value']);
+    if ($match) {
+        form_error($element, t('Messages may only contain letters, spaces, and periods.'));
+    }
+}
